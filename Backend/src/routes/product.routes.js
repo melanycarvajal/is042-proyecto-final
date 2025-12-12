@@ -1,8 +1,12 @@
+// src/routes/product.routes.js
+// Rutas del CRUD de productos
+
 const express = require('express');
-const router = express.Router();
 const controller = require('../controllers/product.controller');
 
-// Obtiene todos los productos
+const router = express.Router();
+
+// Lista todos los productos
 router.get('/', controller.getAll);
 
 // Obtiene un producto por ID
@@ -11,11 +15,13 @@ router.get('/:id', controller.getById);
 // Crea un nuevo producto
 router.post('/', controller.create);
 
-// Actualiza un producto existente
+// Actualiza un producto (PUT = reemplazo completo)
 router.put('/:id', controller.update);
 
-// Elimina un producto por ID
-router.delete('/:id', controller.delete);
+// Actualiza parcialmente un producto (PATCH)
+router.patch('/:id', controller.update);
 
-module.exports = router;
+// Borrado suave (soft delete) del producto
+router.delete('/:id', controller.eliminar);
 
+module.exports = router

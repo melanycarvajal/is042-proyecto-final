@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Productos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f5f7;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            background-color: #ffffff;
+            padding: 20px 25px 30px 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 0;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            padding: 6px 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            min-width: 180px;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: none;
+            background-color: #2c7be5;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #1a5bb8;
+        }
+
+        button.secondary {
+            background-color: #6c757d;
+        }
+
+        button.secondary:hover {
+            background-color: #555e64;
+        }
+
+        button.danger {
+            background-color: #dc3545;
+        }
+
+        button.danger:hover {
+            background-color: #b52a37;
+        }
+
+        .message {
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        .message.error {
+            color: #dc3545;
+        }
+
+        .message.success {
+            color: #28a745;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background-color: white;
+        }
+
+        th, td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #e0e0e0;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #f0f2f5;
+        }
+
+        /* Encabezado y celdas de Acciones centrados */
+        th.actions-col {
+            text-align: center;
+        }
+
+        td.actions-col {
+            text-align: center;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        tr:hover {
+            background-color: #f1f7ff;
+        }
+
+        .table-actions {
+            display: inline-flex;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Área de búsqueda alineada con el borde derecho de la tabla */
+        .search-area {
+            text-align: right;
+            min-width: 320px;
+        }
+
+        .footer-actions {
+            margin-top: 10px;
+            text-align: right; /* botón debajo alineado con borde derecho (columna Acciones) */
+        }
+
+        /* Modal genérico */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0,0,0,0.5);
+            display: none; /* oculto por defecto */
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+        }
+
+        .modal {
+            background-color: #ffffff;
+            padding: 20px 22px 18px 22px;
+            border-radius: 8px;
+            min-width: 320px;
+            max-width: 420px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .modal h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .modal-row {
+            margin-bottom: 10px;
+        }
+
+        .modal-row label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+
+        .modal-row input,
+        .modal-row textarea {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            padding: 6px 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .modal-actions {
+            margin-top: 15px;
+            text-align: right;
+        }
+
+        .modal-actions button {
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Gestión de Productos</h1>
+
+    <!-- Lista + búsqueda + botón agregar -->
+    <section class="section">
+        <div class="table-header">
+            <h2>Lista de productos</h2>
+
+            <!-- Buscar por ID encima de la tabla a la derecha -->
+            <div class="search-area">
+                <input type="text" id="searchId" placeholder="Buscar por ID..." />
+                <button onclick="buscarProducto()">Buscar</button>
+                <button class="secondary" onclick="limpiarBusqueda()">Limpiar</button>
+                <p id="searchMessage" class="message"></p>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Precio</th>
+                <th>Cantidad</th>
+                <th>Descripción</th>
+                <th class="actions-col">Acciones</th>
+            </tr>
+            </thead>
+            <tbody id="productsTableBody">
+            <!-- Filas generadas desde JavaScript -->
+            </tbody>
+        </table>
+        <p id="tableMessage" class="message"></p>
+
+        <!-- Botón Agregar producto debajo y a la derecha (alineado con Acciones) -->
+        <div class="footer-actions">
+            <button onclick="abrirModalCrear()">Agregar producto</button>
+        </div>
+    </section>
+</div>
+
+<!-- Modal para crear / editar producto -->
+<div id="modalProducto" class="modal-overlay">
+    <div class="modal">
+        <h3 id="modalTitulo">Nuevo producto</h3>
+
+        <div class="modal-row">
+            <label for="modalNombreProducto">Nombre</label>
+            <input type="text" id="modalNombreProducto" placeholder="Ejemplo: Teclado mecánico" />
+        </div>
+
+        <div class="modal-row">
+            <label for="modalPrecioProducto">Precio</label>
+            <input type="number" id="modalPrecioProducto" placeholder="Ejemplo: 25000" />
+        </div>
+
+        <div class="modal-row">
+            <label for="modalCantidadProducto">Cantidad</label>
+            <input type="number" id="modalCantidadProducto" placeholder="Ejemplo: 10" />
+        </div>
+
+        <div class="modal-row">
+            <label for="modalDescripcionProducto">Descripción</label>
+            <textarea id="modalDescripcionProducto" placeholder="Ejemplo: Teclado mecánico retroiluminado"></textarea>
+        </div>
+
+        <div class="modal-actions">
+            <button class="secondary" onclick="cerrarModalProducto()">Cancelar</button>
+            <button id="modalGuardarBtn">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para borrar -->
+<div id="modalEliminar" class="modal-overlay">
+    <div class="modal">
+        <h3>Eliminar producto</h3>
+        <p>¿Seguro que quieres eliminar este producto?</p>
+        <div class="modal-actions">
+            <button class="secondary" onclick="cerrarModalEliminar()">Cancelar</button>
+            <button class="danger" onclick="confirmarEliminar()">Eliminar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // URL base del API
+    const API_URL = 'http://localhost:3000/api/productos';
+
+    // Variables para modales
+    let modoModal = 'crear';       // 'crear' o 'editar'
+    let idEditando = null;
+    let idEliminar = null;
+
+    // Cargar productos cuando se abre la página
+    window.onload = function () {
+        cargarProductos();
+    };
+
+    function cargarProductos() {
+        fetch(API_URL)
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (data) {
+                renderTabla(data);
+                document.getElementById('tableMessage').textContent =
+                    data.length > 0 ? 'Se encontraron ' + data.length + ' productos.' : 'No hay productos registrados.';
+            })
+            .catch(function (error) {
+                console.log('Error al cargar productos:', error);
+                document.getElementById('tableMessage').textContent = 'Error al cargar productos.';
+                document.getElementById('tableMessage').className = 'message error';
+            });
+    }
+
+    function renderTabla(productos) {
+        const tbody = document.getElementById('productsTableBody');
+        tbody.innerHTML = '';
+
+        productos.forEach(function (producto) {
+            const fila = document.createElement('tr');
+
+            const celdaId = document.createElement('td');
+            celdaId.textContent = producto._id;
+
+            const celdaNombre = document.createElement('td');
+            celdaNombre.textContent = producto.nombre;
+
+            const celdaPrecio = document.createElement('td');
+            celdaPrecio.textContent = producto.precio;
+
+            const celdaCantidad = document.createElement('td');
+            celdaCantidad.textContent = producto.cantidad;
+
+            const celdaDescripcion = document.createElement('td');
+            celdaDescripcion.textContent = producto.descripcion;
+
+            const celdaAcciones = document.createElement('td');
+            celdaAcciones.className = 'table-actions actions-col';
+
+            const btnEditar = document.createElement('button');
+            btnEditar.textContent = 'Editar';
+            btnEditar.onclick = function () {
+                abrirModalEditar(
+                    producto._id,
+                    producto.nombre,
+                    producto.precio,
+                    producto.cantidad,
+                    producto.descripcion
+                );
+            };
+
+            const btnBorrar = document.createElement('button');
+            btnBorrar.textContent = 'Borrar';
+            btnBorrar.className = 'danger';
+            btnBorrar.onclick = function () {
+                abrirModalEliminar(producto._id);
+            };
+
+            celdaAcciones.appendChild(btnEditar);
+            celdaAcciones.appendChild(btnBorrar);
+
+            fila.appendChild(celdaId);
+            fila.appendChild(celdaNombre);
+            fila.appendChild(celdaPrecio);
+            fila.appendChild(celdaCantidad);
+            fila.appendChild(celdaDescripcion);
+            fila.appendChild(celdaAcciones);
+
+            tbody.appendChild(fila);
+        });
+    }
+
+    // -------- MODAL CREAR / EDITAR --------
+
+    function abrirModalCrear() {
+        modoModal = 'crear';
+        idEditando = null;
+        document.getElementById('modalTitulo').textContent = 'Nuevo producto';
+        document.getElementById('modalNombreProducto').value = '';
+        document.getElementById('modalPrecioProducto').value = '';
+        document.getElementById('modalCantidadProducto').value = '';
+        document.getElementById('modalDescripcionProducto').value = '';
+        document.getElementById('modalProducto').style.display = 'flex';
+
+        const btnGuardar = document.getElementById('modalGuardarBtn');
+        btnGuardar.onclick = function () {
+            guardarProductoDesdeModal();
+        };
+    }
+
+    function abrirModalEditar(id, nombreActual, precioActual, cantidadActual, descripcionActual) {
+        modoModal = 'editar';
+        idEditando = id;
+        document.getElementById('modalTitulo').textContent = 'Editar producto';
+        document.getElementById('modalNombreProducto').value = nombreActual || '';
+        document.getElementById('modalPrecioProducto').value = precioActual || '';
+        document.getElementById('modalCantidadProducto').value = cantidadActual || '';
+        document.getElementById('modalDescripcionProducto').value = descripcionActual || '';
+        document.getElementById('modalProducto').style.display = 'flex';
+
+        const btnGuardar = document.getElementById('modalGuardarBtn');
+        btnGuardar.onclick = function () {
+            guardarProductoDesdeModal();
+        };
+    }
+
+    function cerrarModalProducto() {
+        document.getElementById('modalProducto').style.display = 'none';
+        document.getElementById('modalNombreProducto').value = '';
+        document.getElementById('modalPrecioProducto').value = '';
+        document.getElementById('modalCantidadProducto').value = '';
+        document.getElementById('modalDescripcionProducto').value = '';
+    }
+
+    function guardarProductoDesdeModal() {
+        const nombre = document.getElementById('modalNombreProducto').value.trim();
+        const precioValor = document.getElementById('modalPrecioProducto').value.trim();
+        const cantidadValor = document.getElementById('modalCantidadProducto').value.trim();
+        const descripcion = document.getElementById('modalDescripcionProducto').value.trim();
+
+        if (!nombre) {
+            alert('Escribe un nombre para el producto');
+            return;
+        }
+
+        const precio = precioValor ? Number(precioValor) : 0;
+        const cantidad = cantidadValor ? Number(cantidadValor) : 0;
+
+        const body = {
+            nombre: nombre,
+            precio: precio,
+            cantidad: cantidad,
+            descripcion: descripcion
+        };
+
+        if (modoModal === 'crear') {
+            fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            })
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function () {
+                    cerrarModalProducto();
+                    cargarProductos();
+                })
+                .catch(function (error) {
+                    console.log('Error al crear producto:', error);
+                });
+        } else if (modoModal === 'editar' && idEditando) {
+            fetch(API_URL + '/' + idEditando, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            })
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function () {
+                    cerrarModalProducto();
+                    cargarProductos();
+                })
+                .catch(function (error) {
+                    console.log('Error al editar producto:', error);
+                });
+        }
+    }
+
+    // -------- MODAL ELIMINAR --------
+
+    function abrirModalEliminar(id) {
+        idEliminar = id;
+        document.getElementById('modalEliminar').style.display = 'flex';
+    }
+
+    function cerrarModalEliminar() {
+        document.getElementById('modalEliminar').style.display = 'none';
+        idEliminar = null;
+    }
+
+    function confirmarEliminar() {
+        if (!idEliminar) {
+            return;
+        }
+
+        fetch(API_URL + '/' + idEliminar, {
+            method: 'DELETE'
+        })
+            .then(function (response) {
+                if (response.ok) {
+                    cerrarModalEliminar();
+                    cargarProductos();
+                } else {
+                    alert('No se pudo borrar el producto');
+                }
+            })
+            .catch(function (error) {
+                console.log('Error al borrar producto:', error);
+            });
+    }
+
+    // -------- BÚSQUEDA POR ID --------
+
+    function buscarProducto() {
+        const idInput = document.getElementById('searchId');
+        const id = idInput.value.trim();
+        const message = document.getElementById('searchMessage');
+
+        if (!id) {
+            alert('Escribe un ID para buscar');
+            return;
+        }
+
+        fetch(API_URL + '/' + id)
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('No encontrado');
+                }
+                return response.json();
+            })
+            .then(function (producto) {
+                renderTabla([producto]);
+                message.textContent = 'Mostrando resultado para el ID: ' + id;
+                message.className = 'message success';
+            })
+            .catch(function (error) {
+                console.log('Error al buscar producto:', error);
+                renderTabla([]);
+                message.textContent = 'Producto no encontrado.';
+                message.className = 'message error';
+            });
+    }
+
+    function limpiarBusqueda() {
+        document.getElementById('searchId').value = '';
+        document.getElementById('searchMessage').textContent = '';
+        document.getElementById('searchMessage').className = 'message';
+        cargarProductos();
+    }
+</script>
+</body>
+</html>
